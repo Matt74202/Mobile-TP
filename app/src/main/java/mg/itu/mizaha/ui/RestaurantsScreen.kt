@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.rounded.Search
@@ -32,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import mg.itu.mizaha.R
 import mg.itu.mizaha.data.entities.Restaurant
 
-// Couleurs d’origine (conservées)
+// Couleurs d’origine
 private val BleuFonce = Color(0xFF1E243A)
 private val Orange = Color(0xFFE8602D)
 private val BleuCiel = Color(0xFF51A5C7)
@@ -76,7 +75,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             Image(
                 painter = painterResource(id = R.drawable.logo_sans),
                 contentDescription = "Logo Mizaha",
-                modifier = Modifier.width(180.dp),  // hauteur calculée automatiquement selon le ratio
+                modifier = Modifier.width(180.dp),
                 contentScale = ContentScale.FillWidth
             )
         }
@@ -298,14 +297,15 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
 
 @Composable
 fun RestaurantCard(restaurant: Restaurant) {
-    val (bgColor, emoji) = when (restaurant.type) {
-        "Français" -> Orange to "🇫🇷"
-        "Malgache" -> BleuFonce to "🇲🇬"
-        "Chinois", "Asiatique", "Vietnamien", "Thaï", "Japonais" -> BleuCiel to "🥢"
-        "Grill" -> Color(0xFFC74036) to "🔥"
-        "Fruits de mer", "Poisson" -> Color(0xFF1A90A0) to "🐟"
-        "Italien" -> Color(0xFFE67E22) to "🍝"
-        else -> BleuCiel to "🍽️"
+    val (bgColor, iconRes) = when (restaurant.type) {
+        "Français" -> Orange to R.drawable.ic_francaise
+        "Malgache" -> BleuFonce to R.drawable.ic_malgache
+        "Chinois", "Asiatique", "Thaï", "Japonais" -> BleuCiel to R.drawable.ic_chinoise
+        "Vietnamien" -> Color(0xFFC74036) to R.drawable.ic_vietnamienne
+        "Grill" -> Color(0xFFC74036) to R.drawable.ic_grill
+        "Fruits de mer", "Poisson" -> Color(0xFF1A90A0) to R.drawable.ic_fdm
+        "Italien" -> Color(0xFFE67E22) to R.drawable.ic_italienne
+        else -> BleuCiel to R.drawable.ic_defaut
     }
 
     Card(
@@ -323,7 +323,7 @@ fun RestaurantCard(restaurant: Restaurant) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Icône type
+            // Icône type (image PNG)
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -331,7 +331,12 @@ fun RestaurantCard(restaurant: Restaurant) {
                     .background(bgColor),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = emoji, fontSize = 26.sp)
+                Image(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    contentScale = ContentScale.Fit
+                )
             }
 
             // Infos

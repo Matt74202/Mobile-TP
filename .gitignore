@@ -5,4 +5,3 @@ build/
 *.iml
 local.properties
 .kotlin/errors
-app/src/main/res/drawable
