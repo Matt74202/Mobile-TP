@@ -12,5 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ListeDetailV3"
+rootProject.name = "mizahaV3"
 include(":app")
