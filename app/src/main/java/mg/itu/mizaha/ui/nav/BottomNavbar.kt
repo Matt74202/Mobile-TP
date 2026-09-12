@@ -79,13 +79,10 @@ private fun BottomNavItem(
             )
             .size(cercleSize)
             .clip(CircleShape)
-            .background(if (selected) Orange else Color.Transparent)
+            .background(if (selected) destination.selectedColor else Color.Transparent)  // ← ici
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
-                indication = ripple(
-                    bounded = true,
-                    radius = cercleSize / 2
-                ),
+                indication = ripple(bounded = true, radius = cercleSize / 2),
                 onClick = onClick
             ),
         contentAlignment = Alignment.Center
@@ -94,7 +91,9 @@ private fun BottomNavItem(
             painter = painterResource(id = destination.iconRes),
             contentDescription = destination.label,
             modifier = Modifier.size(iconSize),
-            colorFilter = ColorFilter.tint(if (selected) Color.White else BleuFonce.copy(alpha = 0.5f))
+            colorFilter = ColorFilter.tint(
+                if (selected) Color.White else BleuFonce.copy(alpha = 0.5f)
+            )
         )
     }
 }

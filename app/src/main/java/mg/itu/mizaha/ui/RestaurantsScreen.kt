@@ -28,10 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.blur
 import mg.itu.mizaha.R
 import mg.itu.mizaha.data.entities.Restaurant
 
-// Couleurs d’origine
+// Couleurs d'origine — restaurées telles quelles
 private val BleuFonce = Color(0xFF1E243A)
 private val Orange = Color(0xFFE8602D)
 private val BleuCiel = Color(0xFF51A5C7)
@@ -64,13 +65,13 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             .fillMaxSize()
             .background(GrisClair)
     ) {
-        // ── Header ──────────────────────────────────────────────────────────
-        Column(
+        // ── Header : blanc, logo aligné à gauche ───────────────────────────
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(BleuFonce)
-                .padding(vertical = 16.dp, horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Color.White)
+                .padding(vertical = 12.dp, horizontal = 20.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
                 painter = painterResource(id = R.drawable.logo_sans),
@@ -79,6 +80,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 contentScale = ContentScale.FillWidth
             )
         }
+        HorizontalDivider(color = Gris, thickness = 0.5.dp)
 
         // ── Zone de filtres ─────────────────────────────────────────────────
         Column(
@@ -88,7 +90,6 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Recherche nom
             OutlinedTextField(
                 value = searchNom,
                 onValueChange = { searchNom = it },
@@ -125,7 +126,6 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
             )
 
-            // Recherche quartier + suggestions
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = quartierFiltre,
@@ -206,7 +206,6 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 }
             }
 
-            // Chips de type
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -244,7 +243,6 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             }
         }
 
-        // ── Compteur ────────────────────────────────────────────────────────
         Text(
             text = "${restaurantsFiltres.size} restaurant${if (restaurantsFiltres.size > 1) "s" else ""}",
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
@@ -253,7 +251,6 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             fontWeight = FontWeight.Medium
         )
 
-        // ── Liste ───────────────────────────────────────────────────────────
         if (restaurantsFiltres.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -262,7 +259,11 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("😔", fontSize = 52.sp)
+                    Image(
+                        painter = painterResource(id = R.drawable.er_resto),
+                        contentDescription = "Aucun résultat",
+                        modifier = Modifier.size(120.dp)
+                    )
                     Spacer(Modifier.height(12.dp))
                     Text(
                         "Aucun restaurant trouvé",
@@ -271,7 +272,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                         color = BleuFonce
                     )
                     Text(
-                        "Essaie une autre recherche",
+                        "Essayez une autre recherche",
                         fontSize = 14.sp,
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 6.dp)
@@ -297,24 +298,29 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
 
 @Composable
 fun RestaurantCard(restaurant: Restaurant) {
+    // Couleurs d'origine, mais éclaircies pour les carrés d'icônes (alpha réduit)
     val (bgColor, iconRes) = when (restaurant.type) {
-        "Français" -> Orange to R.drawable.ic_francaise
-        "Malgache" -> BleuFonce to R.drawable.ic_malgache
-        "Chinois", "Asiatique", "Thaï", "Japonais" -> BleuCiel to R.drawable.ic_chinoise
-        "Vietnamien" -> Color(0xFFC74036) to R.drawable.ic_vietnamienne
-        "Grill" -> Color(0xFFC74036) to R.drawable.ic_grill
-        "Fruits de mer", "Poisson" -> Color(0xFF1A90A0) to R.drawable.ic_fdm
-        "Italien" -> Color(0xFFE67E22) to R.drawable.ic_italienne
-        else -> BleuCiel to R.drawable.ic_defaut
+        "Français" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_francaise
+        "Malgache" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_malgache
+        "Chinois", "Asiatique", "Thaï", "Japonais" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_chinoise
+        "Vietnamien" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_vietnamienne
+        "Grill" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_grill
+        "Fruits de mer", "Poisson" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_fdm
+        "Italien" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_italienne
+        else -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_defaut
     }
 
+    // La card entière (nom, adresse, tout) est transparente
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp),
+            .height(110.dp)
+            .border(1.dp, Gris, RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE0E0E0).copy(alpha = 0.35f)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -323,7 +329,7 @@ fun RestaurantCard(restaurant: Restaurant) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Icône type (image PNG)
+            // Icône type — couleur d'origine mais éclaircie (fond pastel)
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -339,7 +345,6 @@ fun RestaurantCard(restaurant: Restaurant) {
                 )
             }
 
-            // Infos
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -361,7 +366,7 @@ fun RestaurantCard(restaurant: Restaurant) {
                     Text(
                         text = restaurant.type,
                         fontSize = 12.sp,
-                        color = Orange,
+                        color = Color.Gray,
                         fontWeight = FontWeight.SemiBold
                     )
                     Text(
@@ -398,18 +403,17 @@ fun RestaurantCard(restaurant: Restaurant) {
                 }
             }
 
-            // Bouton détail
             Box(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(BleuCiel.copy(alpha = 0.12f)),
+                    .background(BleuFonce),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Rounded.Search,
                     contentDescription = "Voir détails",
-                    tint = BleuCiel,
+                    tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
             }
