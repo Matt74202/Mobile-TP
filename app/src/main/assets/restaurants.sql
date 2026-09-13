@@ -65,12 +65,3 @@ INSERT INTO restaurants (id, nom, adresse, latitude, longitude, type, telephone,
 (52, 'Maison de France', 'Antaninarenina', -18.906000, 47.522000, 'Français', '+261 34 10 000 42', 4.4),
 (53, 'Lucky Garden', 'Behoririka', -18.910000, 47.515000, 'Asiatique', '+261 34 10 000 43', 4.2);
 
--- Création de la table réservations
-CREATE TABLE IF NOT EXISTS reservations (
-    id INTEGER PRIMARY KEY NOT NULL,
-    restaurantId INTEGER NOT NULL,
-    date TEXT NOT NULL,
-    heure TEXT NOT NULL,
-    nombre INTEGER NOT NULL,
-    FOREIGN KEY(restaurantId) REFERENCES restaurants(id)
-);

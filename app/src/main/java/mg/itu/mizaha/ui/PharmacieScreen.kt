@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import mg.itu.mizaha.R
 import mg.itu.mizaha.data.entities.Pharmacie
 import mg.itu.mizaha.data.entities.*
+import androidx.compose.material.icons.outlined.NearMe
 
 private val BleuFonce = Color(0xFF1E243A)
 private val BleuCiel = Color(0xFF51A5C7)
@@ -47,6 +48,7 @@ fun PharmaciesScreen(
 ) {
     var lieuFiltre by remember { mutableStateOf("") }
     var showLieuSuggestions by remember { mutableStateOf(false) }
+    var plusProches by remember { mutableStateOf(false) }   // ← ajouté
 
     val lieux = pharmacies.map { it.lieu }.distinct().sorted()
     val lieuxFiltres = if (lieuFiltre.isNotEmpty()) {
@@ -94,7 +96,8 @@ fun PharmaciesScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color.White)
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(modifier = Modifier.fillMaxWidth()) {
                         OutlinedTextField(
@@ -171,6 +174,32 @@ fun PharmaciesScreen(
                             }
                         }
                     }
+
+                    // ── Chip "Plus proches" ──────────────────────────────────────────
+                    FilterChip(
+                        selected = plusProches,
+                        onClick = { plusProches = !plusProches },
+                        label = { Text("Plus proches", fontSize = 13.sp) },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
+                        },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = BleuCiel,
+                            selectedLabelColor = Color.White,
+                            selectedLeadingIconColor = Color.White,
+                            containerColor = GrisClair,
+                            labelColor = BleuFonce,
+                            iconColor = BleuFonce
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = plusProches,
+                            borderColor = if (plusProches) BleuCiel else Gris,
+                            selectedBorderColor = BleuCiel,
+                            borderWidth = 1.dp
+                        )
+                    )
                 }
             }
 
