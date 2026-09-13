@@ -12,11 +12,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import mg.itu.mizaha.data.restaurantsTest
+import mg.itu.mizaha.data.hotelsTest
 import mg.itu.mizaha.ui.RestaurantsScreen
 import mg.itu.mizaha.ui.UrgenceScreen
 import mg.itu.mizaha.ui.nav.BottomNavBar
 import mg.itu.mizaha.ui.nav.Destination
 import mg.itu.mizaha.ui.AccueilScreen
+import mg.itu.mizaha.ui.HotelsScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,7 +49,7 @@ class MainActivity : ComponentActivity() {
                                 RestaurantsScreen(restaurants = restaurantsTest)
                             }
                             composable("hotels") {
-                                UrgenceScreen() // placeholder
+                                HotelsScreen(hotels = hotelsTest)
                             }
                             composable("banques") {
                                 UrgenceScreen() // placeholder

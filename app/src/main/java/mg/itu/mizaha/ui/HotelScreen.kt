@@ -9,60 +9,57 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.draw.blur
 import mg.itu.mizaha.R
-import mg.itu.mizaha.data.entities.Restaurant
-import androidx.compose.material.icons.outlined.NearMe
+import mg.itu.mizaha.data.entities.Hotel
+import androidx.compose.material.icons.outlined.LocationOn
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
 
-// Couleurs d'origine — restaurées telles quelles
 private val BleuFonce = Color(0xFF1E243A)
-private val Orange = Color(0xFFE8602D)
 private val BleuCiel = Color(0xFF51A5C7)
+private val Orange = Color(0xFFE8602D)
 private val Gris = Color(0xFFE7E6E8)
 private val GrisClair = Color(0xFFF8F8F9)
 
 @Composable
-fun RestaurantsScreen(restaurants: List<Restaurant>) {
+fun HotelsScreen(hotels: List<Hotel>) {
     var searchNom by remember { mutableStateOf("") }
-    var typeFiltre by remember { mutableStateOf("Tous") }
     var quartierFiltre by remember { mutableStateOf("") }
     var showQuartierSuggestions by remember { mutableStateOf(false) }
     var plusProches by remember { mutableStateOf(false) }
 
-    val types = listOf("Tous") + restaurants.map { it.type }.distinct().sorted()
-    val quartiers = restaurants.map { it.adresse }.distinct().sorted()
+    val quartiers = hotels.map { it.lieu }.distinct().sorted()
     val quartiersFiltres = if (quartierFiltre.isNotEmpty()) {
         quartiers.filter { it.startsWith(quartierFiltre, ignoreCase = true) }
     } else quartiers
 
-    val restaurantsFiltres = restaurants.filter { r ->
-        val matchNom = r.nom.contains(searchNom, ignoreCase = true)
-        val matchType = typeFiltre == "Tous" || r.type == typeFiltre
+    val hotelsFiltres = hotels.filter { h ->
+        val matchNom = h.nom.contains(searchNom, ignoreCase = true)
         val matchQuartier = quartierFiltre.isEmpty() ||
-                r.adresse.startsWith(quartierFiltre, ignoreCase = true)
-        matchNom && matchType && matchQuartier
+                h.lieu.startsWith(quartierFiltre, ignoreCase = true)
+        matchNom && matchQuartier
     }
 
     Column(
@@ -70,7 +67,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             .fillMaxSize()
             .background(GrisClair)
     ) {
-        // ── Header : blanc, logo aligné à gauche ───────────────────────────
+        // ── Header ──────────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,7 +78,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
             Image(
                 painter = painterResource(id = R.drawable.logo_sans),
                 contentDescription = "Logo Mizaha",
-                modifier = Modifier.width(180.dp),
+                modifier = Modifier.width(120.dp),
                 contentScale = ContentScale.FillWidth
             )
         }
@@ -93,8 +90,9 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 .fillMaxWidth()
                 .background(Color.White)
                 .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Recherche nom
             OutlinedTextField(
                 value = searchNom,
                 onValueChange = { searchNom = it },
@@ -102,7 +100,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                     .fillMaxWidth()
                     .height(52.dp),
                 placeholder = {
-                    Text("Chercher un restaurant…", color = Color.Gray, fontSize = 14.sp)
+                    Text("Chercher un hôtel…", color = Color.Gray, fontSize = 14.sp)
                 },
                 leadingIcon = {
                     Icon(Icons.Rounded.Search, contentDescription = null, tint = Orange)
@@ -123,14 +121,15 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
-                    focusedBorderColor = Orange,
+                    focusedBorderColor = BleuCiel,
                     unfocusedBorderColor = Gris,
-                    cursorColor = Orange
+                    cursorColor = BleuCiel
                 ),
                 singleLine = true,
                 textStyle = LocalTextStyle.current.copy(fontSize = 14.sp)
             )
 
+            // Recherche quartier + suggestions
             Box(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = quartierFiltre,
@@ -145,11 +144,7 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                         Text("Quartier…", color = Color.Gray, fontSize = 14.sp)
                     },
                     leadingIcon = {
-                        Icon(
-                            Icons.Outlined.LocationOn,
-                            contentDescription = null,
-                            tint = BleuCiel
-                        )
+                        Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = BleuCiel)
                     },
                     trailingIcon = {
                         if (quartierFiltre.isNotEmpty()) {
@@ -211,99 +206,59 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                val plusProches = remember { mutableStateOf(false) }
-                FilterChip(
-                    selected = plusProches.value,
-                    onClick = { plusProches.value = !plusProches.value },
-                    label = { Text("Plus proches", fontSize = 13.sp) },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Outlined.NearMe,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    },
-                    shape = RoundedCornerShape(20.dp),
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = BleuCiel,
-                        selectedLabelColor = Color.White,
-                        selectedLeadingIconColor = Color.White,
-                        containerColor = GrisClair,
-                        labelColor = BleuFonce,
-                        iconColor = BleuFonce
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        enabled = true,
-                        selected = plusProches.value,
-                        borderColor = if (plusProches.value) BleuCiel else Gris,
-                        selectedBorderColor = BleuCiel,
-                        borderWidth = 1.dp
-                    )
+            // Chip "Plus proches"
+            FilterChip(
+                selected = plusProches,
+                onClick = { plusProches = !plusProches },
+                label = { Text("Plus proches", fontSize = 13.sp) },
+                leadingIcon = {
+                    Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
+                },
+                shape = RoundedCornerShape(20.dp),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = BleuCiel,
+                    selectedLabelColor = Color.White,
+                    selectedLeadingIconColor = Color.White,
+                    containerColor = GrisClair,
+                    labelColor = BleuFonce,
+                    iconColor = BleuFonce
+                ),
+                border = FilterChipDefaults.filterChipBorder(
+                    enabled = true,
+                    selected = plusProches,
+                    borderColor = if (plusProches) BleuCiel else Gris,
+                    selectedBorderColor = BleuCiel,
+                    borderWidth = 1.dp
                 )
-
-                types.forEach { type ->
-
-                    val selected = typeFiltre == type
-                    FilterChip(
-                        selected = selected,
-                        onClick = { typeFiltre = type },
-                        label = {
-                            Text(
-                                text = type,
-                                fontSize = 13.sp,
-                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-                            )
-                        },
-                        shape = RoundedCornerShape(20.dp),
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Orange,
-                            selectedLabelColor = Color.White,
-                            containerColor = GrisClair,
-                            labelColor = BleuFonce
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
-                            selected = selected,
-                            borderColor = if (selected) Orange else Gris,
-                            selectedBorderColor = Orange,
-                            borderWidth = 1.dp
-                        )
-                    )
-                }
-
-            }
+            )
         }
 
+        // ── Compteur ────────────────────────────────────────────────────────
         Text(
-            text = "${restaurantsFiltres.size} restaurant${if (restaurantsFiltres.size > 1) "s" else ""}",
+            text = "${hotelsFiltres.size} hôtel${if (hotelsFiltres.size > 1) "s" else ""}",
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
             fontSize = 13.sp,
             color = Color.Gray,
             fontWeight = FontWeight.Medium
         )
 
-        if (restaurantsFiltres.isEmpty()) {
+        // ── Liste ou état vide ───────────────────────────────────────────────
+        if (hotelsFiltres.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1f),                 // ← maintenant c’est correct
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
-                        painter = painterResource(id = R.drawable.er_resto),
+                        painter = painterResource(id = R.drawable.er_hotel),
                         contentDescription = "Aucun résultat",
                         modifier = Modifier.size(120.dp)
                     )
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        "Aucun restaurant trouvé",
+                        "Aucun hôtel trouvé",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = BleuFonce
@@ -325,8 +280,8 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
             ) {
-                items(restaurantsFiltres, key = { it.id }) { restaurant ->
-                    RestaurantCard(restaurant)
+                items(hotelsFiltres, key = { it.id }) { hotel ->
+                    HotelCard(hotel)
                 }
             }
         }
@@ -334,27 +289,14 @@ fun RestaurantsScreen(restaurants: List<Restaurant>) {
 }
 
 @Composable
-fun RestaurantCard(restaurant: Restaurant) {
+fun HotelCard(hotel: Hotel) {
+    val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     var showCallDialog by remember { mutableStateOf(false) }
 
-    // Couleurs d'origine, mais éclaircies pour les carrés d'icônes (alpha réduit)
-    val (bgColor, iconRes) = when (restaurant.type) {
-        "Français" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_francaise
-        "Malgache" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_malgache
-        "Chinois", "Asiatique", "Thaï", "Japonais" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_chinoise
-        "Vietnamien" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_vietnamienne
-        "Grill" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_grill
-        "Fruits de mer", "Poisson" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_fdm
-        "Italien" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_italienne
-        else -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_defaut
-    }
-
-    // La card entière (nom, adresse, tout) est transparente
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp)
             .border(1.dp, Gris, RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -362,37 +304,26 @@ fun RestaurantCard(restaurant: Restaurant) {
             containerColor = Color(0xFFE0E0E0).copy(alpha = 0.35f)
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            // Icône type — couleur d'origine mais éclaircie (fond pastel)
-            Box(
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // ── Image de l'hôtel ────────────────────────────────────────────
+            Image(
+                painter = painterResource(id = hotel.imageRes),
+                contentDescription = hotel.nom,
                 modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(bgColor),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp)),
+                contentScale = ContentScale.Crop
+            )
 
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = restaurant.nom,
+                    text = hotel.nom,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = BleuFonce,
@@ -400,88 +331,81 @@ fun RestaurantCard(restaurant: Restaurant) {
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(Modifier.height(4.dp))
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = restaurant.type,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.SemiBold
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = BleuCiel
                     )
-                    Text(
-                        text = "  ·  ",
-                        fontSize = 12.sp,
-                        color = Color.LightGray
+                    Spacer(Modifier.width(4.dp))
+                    Text(text = hotel.lieu, fontSize = 13.sp, color = Color.Gray)
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { showCallDialog = true }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Phone,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = BleuCiel
                     )
+                    Spacer(Modifier.width(4.dp))
                     Text(
-                        text = restaurant.adresse,
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = hotel.contact,
+                        fontSize = 13.sp,
+                        color = BleuCiel,
+                        fontWeight = FontWeight.Medium
                     )
                 }
 
-                restaurant.telephone?.let { tel ->
-                    Spacer(Modifier.height(4.dp))
+                hotel.siteWeb?.let { url ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { showCallDialog = true }  // ← ajouté
+                        modifier = Modifier
+                            .clickable { uriHandler.openUri(url) }
+                            .padding(top = 2.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Outlined.Phone,
+                            imageVector = Icons.Outlined.Language,
                             contentDescription = null,
-                            modifier = Modifier.size(13.dp),
-                            tint = BleuCiel
+                            modifier = Modifier.size(14.dp),
+                            tint = BleuFonce
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = tel,
-                            fontSize = 12.sp,
-                            color = BleuCiel,
-                            fontWeight = FontWeight.Medium
+                            text = "Visiter le site web",
+                            fontSize = 13.sp,
+                            color = BleuFonce,
+                            fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
             }
-
-            Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(BleuFonce),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Rounded.Search,
-                    contentDescription = "Voir détails",
-                    tint = Color.White,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            if (showCallDialog && restaurant.telephone != null) {
-                AlertDialog(
-                    onDismissRequest = { showCallDialog = false },
-                    title = { Text("Appeler ?") },
-                    text = { Text("Voulez-vous appeler ${restaurant.nom} au ${restaurant.telephone} ?") },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showCallDialog = false
-                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${restaurant.telephone}"))
-                            context.startActivity(intent)
-                        }) {
-                            Text("Appeler", color = BleuFonce, fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showCallDialog = false }) {
-                            Text("Annuler", color = Color.Gray)
-                        }
-                    }
-                )
-            }
         }
+    }
+
+    if (showCallDialog) {
+        AlertDialog(
+            onDismissRequest = { showCallDialog = false },
+            title = { Text("Appeler ?") },
+            text = { Text("Voulez-vous appeler ${hotel.nom} au ${hotel.contact} ?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCallDialog = false
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${hotel.contact}"))
+                    context.startActivity(intent)
+                }) {
+                    Text("Appeler", color = BleuFonce, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCallDialog = false }) {
+                    Text("Annuler", color = Color.Gray)
+                }
+            }
+        )
     }
 }
