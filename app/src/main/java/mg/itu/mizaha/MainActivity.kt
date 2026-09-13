@@ -16,6 +16,7 @@ import mg.itu.mizaha.ui.RestaurantsScreen
 import mg.itu.mizaha.ui.UrgenceScreen
 import mg.itu.mizaha.ui.nav.BottomNavBar
 import mg.itu.mizaha.ui.nav.Destination
+import mg.itu.mizaha.ui.AccueilScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,13 +35,28 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(innerPadding)
                         ) {
                             composable(Destination.Accueil.route) {
-                                RestaurantsScreen(restaurants = restaurantsTest)
+                                AccueilScreen(navController = navController)
                             }
                             composable(Destination.Urgence.route) {
                                 UrgenceScreen()
                             }
                             composable(Destination.Autre.route) {
                                 UrgenceScreen() // placeholder temporaire, à remplacer plus tard
+                            }
+                            composable("restaurants") {
+                                RestaurantsScreen(restaurants = restaurantsTest)
+                            }
+                            composable("hotels") {
+                                UrgenceScreen() // placeholder
+                            }
+                            composable("banques") {
+                                UrgenceScreen() // placeholder
+                            }
+                            composable("pharmacies") {
+                                UrgenceScreen() // placeholder
+                            }
+                            composable("activites") {
+                                UrgenceScreen() // placeholder
                             }
                         }
                     }
