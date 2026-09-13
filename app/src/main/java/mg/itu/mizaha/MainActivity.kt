@@ -55,7 +55,10 @@ class MainActivity : ComponentActivity() {
                                 BanquesScreen(banques = banquesTest)
                             }
                             composable("pharmacies") {
-                                UrgenceScreen() // placeholder
+                                PharmaciesScreen(
+                                    pharmacies = pharmaciesTest,
+                                    semaineDeGarde = semaineDeGardeTest
+                                )
                             }
                             composable("activites") {
                                 UrgenceScreen() // placeholder
