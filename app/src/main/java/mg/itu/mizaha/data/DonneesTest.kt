@@ -1,7 +1,7 @@
 package mg.itu.mizaha.data
 
 import mg.itu.mizaha.data.entities.Restaurant
-import mg.itu.mizaha.data.entities.Hotel
+import mg.itu.mizaha.data.entities.*
 import mg.itu.mizaha.R
 val restaurantsTest = listOf(
     Restaurant(1, "La Petite Brasserie", "Ambodirapiata", -18.910766, 47.522062, "Français", "+261 34 52 082 01", 4.5),
@@ -20,4 +20,15 @@ val hotelsTest = listOf(
     Hotel(4, "Le Louvre Hôtel & Spa", "Antaninarenina", "+261 20 22 341 33", "https://www.lelouvre-hotel.com", R.drawable.hotel_louvre),
     Hotel(5, "Sakamanga Hôtel", "Isoraka", "+261 20 22 358 09", null, R.drawable.hotel_sakamanga),
     Hotel(6, "Hôtel Panorama", "Ankorondrano", "+261 20 22 630 06", "https://www.hotelpanorama.mg", R.drawable.hotel_panorama)
+)
+
+val banquesTest = listOf(
+    Banque(1, "BNI Analakely", "BNI", "Analakely"),
+    Banque(2, "BNI Ankorondrano", "BNI", "Ankorondrano"),
+    Banque(3, "BOA Antaninarenina", "BOA", "Antaninarenina"),
+    Banque(4, "BOA Ankorondrano", "BOA", "Ankorondrano"),
+    Banque(5, "BFV-SG Analakely", "BFV-SG", "Analakely"),
+    Banque(6, "BMOI Haute-Ville", "BMOI", "Haute-Ville"),
+    Banque(7, "Access Bank Ambatonakanga", "Access Bank", "Ambatonakanga"),
+    Banque(8, "AFG Bank Tanjombato", "AFG Bank", "Tanjombato")
 )

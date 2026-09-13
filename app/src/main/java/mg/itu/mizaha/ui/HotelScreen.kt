@@ -305,7 +305,6 @@ fun HotelCard(hotel: Hotel) {
         )
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            // ── Image de l'hôtel ────────────────────────────────────────────
             Image(
                 painter = painterResource(id = hotel.imageRes),
                 contentDescription = hotel.nom,
@@ -331,7 +330,20 @@ fun HotelCard(hotel: Hotel) {
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        val query = "${hotel.nom}, ${hotel.lieu}, Antananarivo"
+                        val uri = Uri.parse("geo:0,0?q=${Uri.encode(query)}")
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        intent.setPackage("com.google.android.apps.maps")
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        }
+                    }
+                ) {
                     Icon(
                         imageVector = Icons.Outlined.LocationOn,
                         contentDescription = null,
@@ -339,7 +351,7 @@ fun HotelCard(hotel: Hotel) {
                         tint = BleuCiel
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text(text = hotel.lieu, fontSize = 13.sp, color = Color.Gray)
+                    Text(text = hotel.lieu, fontSize = 13.sp, color = BleuCiel)
                 }
 
                 Row(

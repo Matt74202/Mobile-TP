@@ -338,7 +338,6 @@ fun RestaurantCard(restaurant: Restaurant) {
     val context = LocalContext.current
     var showCallDialog by remember { mutableStateOf(false) }
 
-    // Couleurs d'origine, mais éclaircies pour les carrés d'icônes (alpha réduit)
     val (bgColor, iconRes) = when (restaurant.type) {
         "Français" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_francaise
         "Malgache" -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_malgache
@@ -350,7 +349,6 @@ fun RestaurantCard(restaurant: Restaurant) {
         else -> BleuCiel.copy(alpha = 0.15f) to R.drawable.ic_defaut
     }
 
-    // La card entière (nom, adresse, tout) est transparente
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -369,7 +367,6 @@ fun RestaurantCard(restaurant: Restaurant) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Icône type — couleur d'origine mais éclaircie (fond pastel)
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -402,7 +399,20 @@ fun RestaurantCard(restaurant: Restaurant) {
 
                 Spacer(Modifier.height(4.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable {
+                        val query = "${restaurant.nom}, ${restaurant.adresse}, Antananarivo"
+                        val uri = Uri.parse("geo:0,0?q=${Uri.encode(query)}")
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        intent.setPackage("com.google.android.apps.maps")
+                        try {
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        }
+                    }
+                ) {
                     Text(
                         text = restaurant.type,
                         fontSize = 12.sp,
@@ -417,7 +427,7 @@ fun RestaurantCard(restaurant: Restaurant) {
                     Text(
                         text = restaurant.adresse,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = BleuCiel,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -427,7 +437,7 @@ fun RestaurantCard(restaurant: Restaurant) {
                     Spacer(Modifier.height(4.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { showCallDialog = true }  // ← ajouté
+                        modifier = Modifier.clickable { showCallDialog = true }
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.Phone,
@@ -460,28 +470,28 @@ fun RestaurantCard(restaurant: Restaurant) {
                     modifier = Modifier.size(20.dp)
                 )
             }
-
-            if (showCallDialog && restaurant.telephone != null) {
-                AlertDialog(
-                    onDismissRequest = { showCallDialog = false },
-                    title = { Text("Appeler ?") },
-                    text = { Text("Voulez-vous appeler ${restaurant.nom} au ${restaurant.telephone} ?") },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            showCallDialog = false
-                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${restaurant.telephone}"))
-                            context.startActivity(intent)
-                        }) {
-                            Text("Appeler", color = BleuFonce, fontWeight = FontWeight.Bold)
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showCallDialog = false }) {
-                            Text("Annuler", color = Color.Gray)
-                        }
-                    }
-                )
-            }
         }
+    }
+
+    if (showCallDialog && restaurant.telephone != null) {
+        AlertDialog(
+            onDismissRequest = { showCallDialog = false },
+            title = { Text("Appeler ?") },
+            text = { Text("Voulez-vous appeler ${restaurant.nom} au ${restaurant.telephone} ?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCallDialog = false
+                    val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${restaurant.telephone}"))
+                    context.startActivity(intent)
+                }) {
+                    Text("Appeler", color = BleuFonce, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCallDialog = false }) {
+                    Text("Annuler", color = Color.Gray)
+                }
+            }
+        )
     }
 }
