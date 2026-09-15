@@ -19,7 +19,33 @@ import mg.itu.mizaha.ui.nav.BottomNavBar
 import mg.itu.mizaha.ui.nav.Destination
 import mg.itu.mizaha.ui.AccueilScreen
 import mg.itu.mizaha.ui.*
+import android.Manifest
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                Surface {
+                    val locationPermissions = rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestMultiplePermissions()
+                    ) { /* résultat géré dans l'écran d'accueil ou un ViewModel dédié */ }
+
+                    LaunchedEffect(Unit) {
+                        locationPermissions.launch(
+                            arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
