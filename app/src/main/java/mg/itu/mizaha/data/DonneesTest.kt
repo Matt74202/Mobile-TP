@@ -67,3 +67,16 @@ val activitesTest = listOf(
     Activite(9, "Escape Game Tana", "Escape game", "Détente", "Isoraka", -18.912000, 47.518000),
     Activite(10, "Piscine Hôtel Panorama", "Natation", "Sport", "Ankorondrano", -18.876000, 47.520000)
 )
+
+//----------------------------------------URGENCE---------------------------------------------------
+val contactsUrgenceTest = listOf(
+    ContactUrgence(1, "Commissariat Analakely", "Police", "Analakely", "+261 20 22 227 35"),
+    ContactUrgence(2, "Commissariat Antaninarenina", "Police", "Antaninarenina", "+261 20 22 202 22"),
+    ContactUrgence(3, "Gendarmerie Ankorondrano", "Gendarmerie", "Ankorondrano", "+261 20 22 621 91"),
+    ContactUrgence(4, "Commissariat Isoraka", "Police", "Isoraka", "+261 20 22 296 47"),
+    ContactUrgence(5, "Gendarmerie Behoririka", "Gendarmerie", "Behoririka", "+261 20 22 341 08"),
+    ContactUrgence(6, "Commissariat Ambohijatovo", "Police", "Ambohijatovo", "+261 20 22 253 19")
+)
+
+// Statique pour l'instant — sera calculé par géolocalisation plus tard
+val contactPlusProcheTest = contactsUrgenceTest[0]

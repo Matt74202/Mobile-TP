@@ -40,10 +40,16 @@ class MainActivity : ComponentActivity() {
                                 AccueilScreen(navController = navController)
                             }
                             composable(Destination.Urgence.route) {
-                                UrgenceScreen()
+                                UrgenceScreen(
+                                    contacts = contactsUrgenceTest,
+                                    contactPlusProche = contactPlusProcheTest
+                                )
                             }
-                            composable(Destination.Autre.route) {
-                                UrgenceScreen() // placeholder temporaire, à remplacer plus tard
+                            composable(Destination.Urgence.route) {
+                                UrgenceScreen(
+                                    contacts = contactsUrgenceTest,
+                                    contactPlusProche = contactPlusProcheTest
+                                )
                             }
                             composable("restaurants") {
                                 RestaurantsScreen(restaurants = restaurantsTest)
