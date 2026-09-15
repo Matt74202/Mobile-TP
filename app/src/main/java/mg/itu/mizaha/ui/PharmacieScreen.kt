@@ -48,7 +48,7 @@ fun PharmaciesScreen(
 ) {
     var lieuFiltre by remember { mutableStateOf("") }
     var showLieuSuggestions by remember { mutableStateOf(false) }
-    var plusProches by remember { mutableStateOf(false) }   // ← ajouté
+    var plusProches by remember { mutableStateOf(false) }
 
     val lieux = pharmacies.map { it.lieu }.distinct().sorted()
     val lieuxFiltres = if (lieuFiltre.isNotEmpty()) {
@@ -175,13 +175,17 @@ fun PharmaciesScreen(
                         }
                     }
 
-                    // ── Chip "Plus proches" ──────────────────────────────────────────
+                    // ── Chip "Plus proches" ──────────────────────────────────
                     FilterChip(
                         selected = plusProches,
                         onClick = { plusProches = !plusProches },
                         label = { Text("Plus proches", fontSize = 13.sp) },
                         leadingIcon = {
-                            Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(
+                                Icons.Outlined.NearMe,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
                         },
                         shape = RoundedCornerShape(20.dp),
                         colors = FilterChipDefaults.filterChipColors(
@@ -203,6 +207,7 @@ fun PharmaciesScreen(
                 }
             }
 
+            // ── Compteur ─────────────────────────────────────────────────────
             item {
                 Text(
                     text = "${pharmaciesFiltrees.size} pharmacie${if (pharmaciesFiltrees.size > 1) "s" else ""}",
@@ -213,9 +218,42 @@ fun PharmaciesScreen(
                 )
             }
 
-            items(pharmaciesFiltrees, key = { it.id }) { pharmacie ->
-                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
-                    PharmacieCard(pharmacie)
+            // ── Liste ou état vide ───────────────────────────────────────────
+            if (pharmaciesFiltrees.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Image(
+                                painter = painterResource(id = R.drawable.er_pharmacie),
+                                contentDescription = "Aucun résultat",
+                                modifier = Modifier.size(120.dp)
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "Aucune pharmacie trouvée",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = BleuFonce
+                            )
+                            Text(
+                                "Essayez une autre recherche",
+                                fontSize = 14.sp,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(top = 6.dp)
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(pharmaciesFiltrees, key = { it.id }) { pharmacie ->
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                        PharmacieCard(pharmacie)
+                    }
                 }
             }
         }

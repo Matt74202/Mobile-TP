@@ -232,17 +232,49 @@ fun BanquesScreen(banques: List<Banque>) {
             fontWeight = FontWeight.Medium
         )
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
-        ) {
-            items(banquesFiltrees, key = { it.id }) { banque ->
-                BanqueCard(banque)
+        // ── Liste ou état vide ───────────────────────────────────────────────
+        if (banquesFiltrees.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),                 // ← maintenant c’est correct
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Image(
+                        painter = painterResource(id = R.drawable.er_banque),
+                        contentDescription = "Aucun résultat",
+                        modifier = Modifier.size(120.dp)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Aucune banque trouvée",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = BleuFonce
+                    )
+                    Text(
+                        "Essayez une autre recherche",
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 6.dp)
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
+            ) {
+                items(banquesFiltrees, key = { it.id }) { banque ->
+                    BanqueCard(banque)
+                }
             }
         }
+
     }
 }
 
