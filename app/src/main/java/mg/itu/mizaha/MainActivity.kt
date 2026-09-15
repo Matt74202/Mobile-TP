@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("activites") {
-                                UrgenceScreen() // placeholder
+                                ActivitesScreen(activites = activitesTest)
                             }
                         }
                     }

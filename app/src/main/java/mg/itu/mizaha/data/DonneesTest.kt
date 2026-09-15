@@ -53,3 +53,17 @@ val semaineDeGardeTest = SemaineDeGarde(
         PharmacieDeGarde("Pharmacie Mahamasina", "Mahamasina")
     )
 )
+
+//-----------------------------------------ACTIVITES------------------------------------------------
+val activitesTest = listOf(
+    Activite(1, "Canal Olympia Andohatapenaka", "Cinéma", "Détente", "Andohatapenaka", -18.898000, 47.506000),
+    Activite(2, "Padel Club Ivandry", "Padel", "Sport", "Ivandry", -18.868000, 47.531000),
+    Activite(3, "Spa Le Louvre", "Spa", "Bien-être", "Antaninarenina", -18.908000, 47.524000),
+    Activite(4, "Bowling Tana Waterfront", "Bowling", "Détente", "Waterfront", -18.891000, 47.524000),
+    Activite(5, "Tennis Club Ankorondrano", "Tennis", "Sport", "Ankorondrano", -18.880000, 47.522000),
+    Activite(6, "Musée Andafiavaratra", "Visite guidée", "Culture", "Andafiavaratra", -18.917000, 47.531000),
+    Activite(7, "Salle de sport Fitness Park", "Musculation", "Sport", "Ankorondrano", -18.878000, 47.523000),
+    Activite(8, "Parc Tsarasaotra", "Observation d'oiseaux", "Nature", "Alarobia", -18.870000, 47.535000),
+    Activite(9, "Escape Game Tana", "Escape game", "Détente", "Isoraka", -18.912000, 47.518000),
+    Activite(10, "Piscine Hôtel Panorama", "Natation", "Sport", "Ankorondrano", -18.876000, 47.520000)
+)
