@@ -1,4 +1,3 @@
-// mg/itu/mizaha/MizahaApp.kt
 package mg.itu.mizaha
 
 import android.app.Application
