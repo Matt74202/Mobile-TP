@@ -7,11 +7,14 @@ import android.os.Looper
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.LocationOn
@@ -74,6 +77,8 @@ fun MapScreen(
     val scope = rememberCoroutineScope()
 
     var arriveeTexte by remember { mutableStateOf("") }
+    var rechercheLigneTexte by remember { mutableStateOf("") }
+    var showSuggestionsLigne by remember { mutableStateOf(false) }
     var pointDepart by remember {
         mutableStateOf(
             if (userLat != null && userLng != null) GeoPoint(userLat, userLng) else null
@@ -174,7 +179,7 @@ fun MapScreen(
                     else -> couleurAttenuee
                 }
                 outlinePaint.strokeWidth = if (estSurligne) 8f else 3f
-                title = segment.nom ?: "Ligne de bus"
+                title = segment.nomAffiche
                 setOnClickListener { _, _, _ ->
                     Toast.makeText(context, title, Toast.LENGTH_SHORT).show()
                     true
@@ -235,22 +240,66 @@ fun MapScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(GrisClair)
-    ) {
-        // ── Carte de filtres ──────────────────────────────────────────────
+    fun rechercherParNumeroLigne() {
+        if (rechercheLigneTexte.isBlank()) {
+            messageErreur = "Indique un nom ou numéro de ligne"
+            return
+        }
+
+        val correspondances = toutesLesLignes.filter { segment ->
+            segment.nomAffiche.contains(rechercheLigneTexte, ignoreCase = true)
+        }
+
+        lignesTrouvees = correspondances
+        messageErreur = null
+
+        if (correspondances.isEmpty()) {
+            messageErreur = "Aucune ligne ne correspond à « $rechercheLigneTexte »"
+        } else {
+            val tousPoints = correspondances.flatMap { it.points }
+            mapView.zoomToBoundingBox(BoundingBox.fromGeoPoints(tousPoints), true, 100)
+        }
+    }
+
+    fun reinitialiserRecherches() {
+        lignesTrouvees = emptyList()
+        arriveeTexte = ""
+        rechercheLigneTexte = ""
+        showSuggestionsLigne = false
+        messageErreur = null
+    }
+
+    // Liste dédupliquée des noms affichables, pour l'autocomplete
+    val suggestionsLignes = remember(toutesLesLignes, rechercheLigneTexte) {
+        if (rechercheLigneTexte.isBlank()) emptyList()
+        else toutesLesLignes
+            .distinctBy { it.relationId }
+            .map { it.nomAffiche }
+            .distinct()
+            .filter { it.contains(rechercheLigneTexte, ignoreCase = true) }
+            .take(6)
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        // ── Carte en plein écran (arrière-plan) ─────────────────────────────
+        AndroidView(modifier = Modifier.fillMaxSize(), factory = { mapView })
+
+        // ── Bloc de filtres flottant par-dessus, ancré en haut ──────────────
         Card(
             modifier = Modifier
+                .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .heightIn(max = 420.dp),
             shape = RoundedCornerShape(20.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
@@ -359,11 +408,129 @@ fun MapScreen(
                     }
                     if (lignesTrouvees.isNotEmpty()) {
                         OutlinedButton(
-                            onClick = {
-                                lignesTrouvees = emptyList()
-                                arriveeTexte = ""
-                                messageErreur = null
-                            },
+                            onClick = { reinitialiserRecherches() },
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            Text("Réinitialiser", fontSize = 13.sp, color = BleuFonce)
+                        }
+                    }
+                }
+
+                // ── Séparateur "OU" ─────────────────────────────────────────
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Gris)
+                    Text(
+                        "  OU  ",
+                        fontSize = 11.sp,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = Gris)
+                }
+
+                // ── Recherche directe d'une ligne de bus ─────────────────────
+                Text(
+                    "Chercher une ligne précise",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = BleuFonce
+                )
+
+                OutlinedTextField(
+                    value = rechercheLigneTexte,
+                    onValueChange = {
+                        rechercheLigneTexte = it
+                        showSuggestionsLigne = it.isNotEmpty()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    placeholder = {
+                        Text("Ex: Ligne 12, Analakely…", color = Color.Gray, fontSize = 14.sp)
+                    },
+                    leadingIcon = {
+                        Icon(Icons.Rounded.Search, contentDescription = null, tint = BleuCiel)
+                    },
+                    trailingIcon = {
+                        if (rechercheLigneTexte.isNotEmpty()) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Effacer",
+                                tint = BleuCiel,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .clickable {
+                                        rechercheLigneTexte = ""
+                                        showSuggestionsLigne = false
+                                        lignesTrouvees = emptyList()
+                                        messageErreur = null
+                                    }
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = BleuCiel,
+                        unfocusedBorderColor = Gris,
+                        cursorColor = BleuCiel
+                    ),
+                    singleLine = true,
+                    textStyle = TextStyle(fontSize = 14.sp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = KeyboardActions(onSearch = {
+                        showSuggestionsLigne = false
+                        rechercherParNumeroLigne()
+                    })
+                )
+
+                if (showSuggestionsLigne && suggestionsLignes.isNotEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Gris, RoundedCornerShape(12.dp))
+                    ) {
+                        suggestionsLignes.forEachIndexed { index, suggestion ->
+                            Text(
+                                text = suggestion,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        rechercheLigneTexte = suggestion
+                                        showSuggestionsLigne = false
+                                        rechercherParNumeroLigne()
+                                    }
+                                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                                fontSize = 13.sp,
+                                color = BleuFonce
+                            )
+                            if (index < suggestionsLignes.lastIndex) {
+                                HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = { rechercherParNumeroLigne() },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BleuCiel),
+                        modifier = Modifier.height(44.dp)
+                    ) {
+                        Text("Afficher cette ligne", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                    if (lignesTrouvees.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = { reinitialiserRecherches() },
                             shape = RoundedCornerShape(14.dp),
                             modifier = Modifier.height(44.dp)
                         ) {
@@ -378,38 +545,27 @@ fun MapScreen(
             }
         }
 
-        // ── Carte (prend tout l'espace restant) ────────────────────────────
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            AndroidView(modifier = Modifier.fillMaxSize(), factory = { mapView })
-            if (chargementInitial) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.05f)),
-                    contentAlignment = Alignment.Center
+        // ── Indicateur de chargement initial des lignes de bus ──────────────
+        if (chargementInitial) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = Orange
-                            )
-                            Text("Chargement des lignes de bus…", fontSize = 13.sp, color = BleuFonce)
-                        }
-                    }
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = Orange
+                    )
+                    Text("Chargement des lignes de bus…", fontSize = 13.sp, color = BleuFonce)
                 }
             }
         }
