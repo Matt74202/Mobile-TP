@@ -332,7 +332,7 @@ fun ActiviteCard(activite: Activite) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp)
+            // ← .height(100.dp) supprimé, la card s'adapte au contenu
             .clickable {
                 val uri = Uri.parse(
                     "geo:${activite.latitude},${activite.longitude}?q=${activite.latitude},${activite.longitude}(${Uri.encode(activite.nomLieu)})"
@@ -354,7 +354,7 @@ fun ActiviteCard(activite: Activite) {
     ) {
         Row(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -375,10 +375,9 @@ fun ActiviteCard(activite: Activite) {
             }
 
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
+                modifier = Modifier.weight(1f),
+                // ← .fillMaxHeight() supprimé aussi : plus besoin, le Column prend sa hauteur naturelle
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
                     text = activite.nomActivite,
@@ -389,8 +388,6 @@ fun ActiviteCard(activite: Activite) {
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(Modifier.height(2.dp))
-
                 Text(
                     text = activite.nomLieu,
                     fontSize = 12.sp,
@@ -398,8 +395,6 @@ fun ActiviteCard(activite: Activite) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-
-                Spacer(Modifier.height(4.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
