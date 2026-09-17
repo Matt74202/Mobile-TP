@@ -53,9 +53,9 @@ fun BottomNavBar(navController: NavController) {
             bottomNavItems.forEach { destination ->
                 val selected = when (destination) {
                     Destination.Urgence -> currentRoute == Destination.Urgence.route
-                    Destination.Autre -> currentRoute == Destination.Autre.route
+                    Destination.Carte -> currentRoute == Destination.Carte.route
                     else -> currentRoute != Destination.Urgence.route &&
-                            currentRoute != Destination.Autre.route
+                            currentRoute != Destination.Carte.route
                 }
 
                 BottomNavItem(

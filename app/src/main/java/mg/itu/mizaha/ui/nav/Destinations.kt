@@ -29,11 +29,17 @@ sealed class Destination(
         selectedColor = Rouge
     )
 
-    data object Autre : Destination(
+  /*  data object Autre : Destination(
         route = "autre",
         label = "Plus",
         iconRes = R.drawable.ic_nav_plus
+    )*/
+
+    data object Carte : Destination(
+        route = "carte",
+        label = "Carte",
+        iconRes = R.drawable.ic_nav_accueil // tu mettras une icône carte plus tard
     )
 }
 
-val bottomNavItems = listOf(Destination.Urgence, Destination.Accueil, Destination.Autre)
+val bottomNavItems = listOf(Destination.Urgence, Destination.Accueil , Destination.Carte)

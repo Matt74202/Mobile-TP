@@ -11,7 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -20,11 +23,19 @@ import mg.itu.mizaha.data.*
 import mg.itu.mizaha.ui.*
 import mg.itu.mizaha.ui.nav.BottomNavBar
 import mg.itu.mizaha.ui.nav.Destination
+import mg.itu.mizaha.viewmodel.HotelsViewModel
+import org.osmdroid.config.Configuration
+import androidx.preference.PreferenceManager
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Configuration.getInstance().load(
+            applicationContext,
+            PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        )
+        Configuration.getInstance().userAgentValue = packageName
         setContent {
             MaterialTheme {
                 Surface {
@@ -42,6 +53,8 @@ class MainActivity : ComponentActivity() {
                     }
 
                     val navController = rememberNavController()
+                    val hotelsViewModel: HotelsViewModel = hiltViewModel()
+                    val userLocation by hotelsViewModel.userLocation.collectAsState()
 
                     Scaffold(
                         bottomBar = { BottomNavBar(navController) }
@@ -57,9 +70,15 @@ class MainActivity : ComponentActivity() {
                             composable(Destination.Urgence.route) {
                                 UrgenceScreen()
                             }
-                            composable(Destination.Autre.route) {
-                                UrgenceScreen() // placeholder temporaire, à remplacer plus tard
+
+                            // ← Nouvelle destination Carte
+                            composable(Destination.Carte.route) {
+                                MapScreen(
+                                    userLat = userLocation?.first,
+                                    userLng = userLocation?.second
+                                )
                             }
+
                             composable("restaurants") {
                                 RestaurantsScreen(restaurants = restaurantsTest)
                             }

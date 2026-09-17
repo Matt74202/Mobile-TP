@@ -36,6 +36,10 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.navigation:navigation-compose:2.9.8")
     implementation("androidx.compose.material:material-icons-extended:1.7.3")
+    // MapLibre
+    // build.gradle.kts (module app)
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("androidx.preference:preference-ktx:1.2.1")
 
 
     // Room — la base de données locale
