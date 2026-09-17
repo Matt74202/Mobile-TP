@@ -16,32 +16,34 @@ val restaurantsTest = listOf(
 
 //-------------------------------------------HOTEL----------------------------------------------
 val hotelsTest = listOf(
-    Hotel(1, "Carlton Madagascar", "Anosy", "+261 20 22 260 60", "https://www.carlton-madagascar.com", R.drawable.hotel_carlton),
-    Hotel(2, "Radisson Blu Antananarivo Waterfront", "Waterfront", "+261 20 23 300 00", "https://www.radissonhotels.com", R.drawable.hotel_radisson),
-    Hotel(3, "Hôtel Colbert", "Antaninarenina", "+261 20 22 202 02", "https://www.hotel-colbert.mg", R.drawable.hotel_colbert),
-    Hotel(4, "Le Louvre Hôtel & Spa", "Antaninarenina", "+261 20 22 341 33", "https://www.lelouvre-hotel.com", R.drawable.hotel_louvre),
-    Hotel(5, "Sakamanga Hôtel", "Isoraka", "+261 20 22 358 09", null, R.drawable.hotel_sakamanga),
-    Hotel(6, "Hôtel Panorama", "Ankorondrano", "+261 20 22 630 06", "https://www.hotelpanorama.mg", R.drawable.hotel_panorama)
+    Hotel(1, "Carlton Madagascar", "Anosy", -18.914600, 47.526600, "+261 20 22 260 60", "https://www.carlton-madagascar.com", R.drawable.hotel_carlton),
+    Hotel(2, "Radisson Blu Antananarivo Waterfront", "Waterfront", -18.873000, 47.528500, "+261 20 23 300 00", "https://www.radissonhotels.com", R.drawable.hotel_radisson),
+    Hotel(3, "Hôtel Colbert", "Antaninarenina", -18.908600, 47.525500, "+261 20 22 202 02", "https://www.hotel-colbert.mg", R.drawable.hotel_colbert),
+    Hotel(4, "Le Louvre Hôtel & Spa", "Antaninarenina", -18.909200, 47.526100, "+261 20 22 341 33", "https://www.lelouvre-hotel.com", R.drawable.hotel_louvre),
+    Hotel(5, "Sakamanga Hôtel", "Isoraka", -18.910700, 47.521100, "+261 20 22 358 09", null, R.drawable.hotel_sakamanga),
+    Hotel(6, "Hôtel Panorama", "Ankorondrano", -18.880200, 47.522500, "+261 20 22 630 06", "https://www.hotelpanorama.mg", R.drawable.hotel_panorama)
 )
+
 //-------------------------------------------BANQUE----------------------------------------------
 val banquesTest = listOf(
-    Banque(1, "BNI Analakely", "BNI", "Analakely"),
-    Banque(2, "BNI Ankorondrano", "BNI", "Ankorondrano"),
-    Banque(3, "BOA Antaninarenina", "BOA", "Antaninarenina"),
-    Banque(4, "BOA Ankorondrano", "BOA", "Ankorondrano"),
-    Banque(5, "BFV-SG Analakely", "BFV-SG", "Analakely"),
-    Banque(6, "BMOI Haute-Ville", "BMOI", "Haute-Ville"),
-    Banque(7, "Access Bank Ambatonakanga", "Access Bank", "Ambatonakanga"),
-    Banque(8, "AFG Bank Tanjombato", "AFG Bank", "Tanjombato")
+    Banque(1, "BNI Analakely", "BNI", "Analakely", -18.907700, 47.525900),
+    Banque(2, "BNI Ankorondrano", "BNI", "Ankorondrano", -18.880200, 47.522500),
+    Banque(3, "BOA Antaninarenina", "BOA", "Antaninarenina", -18.908600, 47.525500),
+    Banque(4, "BOA Ankorondrano", "BOA", "Ankorondrano", -18.879000, 47.523800),
+    Banque(5, "BFV-SG Analakely", "BFV-SG", "Analakely", -18.907200, 47.526400),
+    Banque(6, "BMOI Haute-Ville", "BMOI", "Haute-Ville", -18.909000, 47.523000),
+    Banque(7, "Access Bank Ambatonakanga", "Access Bank", "Ambatonakanga", -18.909500, 47.528500),
+    Banque(8, "AFG Bank Tanjombato", "AFG Bank", "Tanjombato", -18.953000, 47.507500)
 )
+
 //-------------------------------------------PHARMACIE----------------------------------------------
 val pharmaciesTest = listOf(
-    Pharmacie(1, "Pharmacie Analakely", "Analakely"),
-    Pharmacie(2, "Pharmacie de Ambohijatovo", "Ambohijatovo"),
-    Pharmacie(3, "Pharmacie Antaninarenina", "Antaninarenina"),
-    Pharmacie(4, "Pharmacie Mahamasina", "Mahamasina"),
-    Pharmacie(5, "Pharmacie Isoraka", "Isoraka"),
-    Pharmacie(6, "Pharmacie CAPITALE", "Ankazomanga")
+    Pharmacie(1, "Pharmacie Analakely", "Analakely", -18.907700, 47.525900),
+    Pharmacie(2, "Pharmacie de Ambohijatovo", "Ambohijatovo", -18.906800, 47.523600),
+    Pharmacie(3, "Pharmacie Antaninarenina", "Antaninarenina", -18.908600, 47.525500),
+    Pharmacie(4, "Pharmacie Mahamasina", "Mahamasina", -18.918800, 47.522500),
+    Pharmacie(5, "Pharmacie Isoraka", "Isoraka", -18.910700, 47.521100),
+    Pharmacie(6, "Pharmacie CAPITALE", "Ankazomanga", -18.897500, 47.507500)
 )
 
 val semaineDeGardeTest = SemaineDeGarde(
