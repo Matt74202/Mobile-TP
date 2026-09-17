@@ -40,14 +40,29 @@ class SuggestionRepository @Inject constructor(
         return proximite * poidsPreference
     }
 
-    private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+   /* private fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val r = 6_371_000.0
         val dLat = Math.toRadians(lat2 - lat1)
         val dLon = Math.toRadians(lon2 - lon1)
         val a = sin(dLat / 2).pow(2) +
                 cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) * sin(dLon / 2).pow(2)
         return r * 2 * atan2(sqrt(a), sqrt(1 - a))
-    }
+    }*/
+// Dans SuggestionRepository
+   companion object {
+       const val RAYON_MAX_METRES = 3000.0
 
-    companion object { const val RAYON_MAX_METRES = 3000.0 }
+       fun haversine(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+           val r = 6_371_000.0
+           val dLat = Math.toRadians(lat2 - lat1)
+           val dLon = Math.toRadians(lon2 - lon1)
+           val a = kotlin.math.sin(dLat / 2).pow(2) +
+                   kotlin.math.cos(Math.toRadians(lat1)) *
+                   kotlin.math.cos(Math.toRadians(lat2)) *
+                   kotlin.math.sin(dLon / 2).pow(2)
+           return r * 2 * kotlin.math.atan2(kotlin.math.sqrt(a), kotlin.math.sqrt(1 - a))
+       }
+   }
+    /*companion object { const val RAYON_MAX_METRES = 3000.0 }*/
+
 }

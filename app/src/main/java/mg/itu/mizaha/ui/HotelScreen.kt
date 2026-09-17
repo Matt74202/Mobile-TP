@@ -1,14 +1,17 @@
 package mg.itu.mizaha.ui
 
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -21,21 +24,21 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import mg.itu.mizaha.R
 import mg.itu.mizaha.data.entities.Hotel
-import androidx.compose.material.icons.outlined.LocationOn
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.draw.clip
+import mg.itu.mizaha.data.repository.SuggestionRepository
+import mg.itu.mizaha.viewmodel.HotelsViewModel
 
 private val BleuFonce = Color(0xFF1E243A)
 private val BleuCiel = Color(0xFF51A5C7)
@@ -44,22 +47,68 @@ private val Gris = Color(0xFFE7E6E8)
 private val GrisClair = Color(0xFFF8F8F9)
 
 @Composable
-fun HotelsScreen(hotels: List<Hotel>) {
+fun HotelsScreen(
+    hotels: List<Hotel>,
+    viewModel: HotelsViewModel = hiltViewModel()
+) {
     var searchNom by remember { mutableStateOf("") }
     var quartierFiltre by remember { mutableStateOf("") }
     var showQuartierSuggestions by remember { mutableStateOf(false) }
     var plusProches by remember { mutableStateOf(false) }
+
+    val userLocation by viewModel.userLocation.collectAsState()
+    val context = LocalContext.current
+
+    // Permission launcher
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) {
+            viewModel.fetchCurrentLocation()
+        }
+    }
+
+    // Quand on active le filtre, on demande la position
+    LaunchedEffect(plusProches) {
+        if (plusProches) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
 
     val quartiers = hotels.map { it.lieu }.distinct().sorted()
     val quartiersFiltres = if (quartierFiltre.isNotEmpty()) {
         quartiers.filter { it.startsWith(quartierFiltre, ignoreCase = true) }
     } else quartiers
 
-    val hotelsFiltres = hotels.filter { h ->
-        val matchNom = h.nom.contains(searchNom, ignoreCase = true)
-        val matchQuartier = quartierFiltre.isEmpty() ||
-                h.lieu.startsWith(quartierFiltre, ignoreCase = true)
-        matchNom && matchQuartier
+    // ── Filtrage + tri + distance ─────────────────────────────────────
+    val hotelsAvecDistance = remember(hotels, searchNom, quartierFiltre, plusProches, userLocation) {
+        val filtered = hotels.filter { h ->
+            val matchNom = h.nom.contains(searchNom, ignoreCase = true)
+            val matchQuartier = quartierFiltre.isEmpty() ||
+                    h.lieu.startsWith(quartierFiltre, ignoreCase = true)
+            matchNom && matchQuartier
+        }
+
+        if (plusProches && userLocation != null) {
+            val (lat, lng) = userLocation!!
+            filtered
+                .map { hotel ->
+                    val distanceMetres = SuggestionRepository.haversine( // ← utilise ta fonction
+                        lat, lng, hotel.latitude, hotel.longitude
+                    )
+                    hotel to distanceMetres
+                }
+                .sortedBy { it.second }          // plus proche → plus loin
+        } else {
+            filtered.map { it to null }
+        }
     }
 
     Column(
@@ -67,7 +116,7 @@ fun HotelsScreen(hotels: List<Hotel>) {
             .fillMaxSize()
             .background(GrisClair)
     ) {
-        // ── Header ──────────────────────────────────────────────────────────
+        // ── Header ────────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -84,7 +133,7 @@ fun HotelsScreen(hotels: List<Hotel>) {
         }
         HorizontalDivider(color = Gris, thickness = 0.5.dp)
 
-        // ── Zone de filtres ─────────────────────────────────────────────────
+        // ── Zone de filtres ───────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,7 +261,11 @@ fun HotelsScreen(hotels: List<Hotel>) {
                 onClick = { plusProches = !plusProches },
                 label = { Text("Plus proches", fontSize = 13.sp) },
                 leadingIcon = {
-                    Icon(Icons.Outlined.NearMe, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(
+                        Icons.Outlined.NearMe,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
                 },
                 shape = RoundedCornerShape(20.dp),
                 colors = FilterChipDefaults.filterChipColors(
@@ -233,21 +286,21 @@ fun HotelsScreen(hotels: List<Hotel>) {
             )
         }
 
-        // ── Compteur ────────────────────────────────────────────────────────
+        // ── Compteur ──────────────────────────────────────────────────
         Text(
-            text = "${hotelsFiltres.size} hôtel${if (hotelsFiltres.size > 1) "s" else ""}",
+            text = "${hotelsAvecDistance.size} hôtel${if (hotelsAvecDistance.size > 1) "s" else ""}",
             modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
             fontSize = 13.sp,
             color = Color.Gray,
             fontWeight = FontWeight.Medium
         )
 
-        // ── Liste ou état vide ───────────────────────────────────────────────
-        if (hotelsFiltres.isEmpty()) {
+        // ── Liste ou état vide ────────────────────────────────────────
+        if (hotelsAvecDistance.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),                 // ← maintenant c’est correct
+                    .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -280,8 +333,11 @@ fun HotelsScreen(hotels: List<Hotel>) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp)
             ) {
-                items(hotelsFiltres, key = { it.id }) { hotel ->
-                    HotelCard(hotel)
+                items(hotelsAvecDistance, key = { it.first.id }) { (hotel, distanceMetres) ->
+                    HotelCard(
+                        hotel = hotel,
+                        distanceKm = distanceMetres?.let { it / 1000.0 }
+                    )
                 }
             }
         }
@@ -289,7 +345,10 @@ fun HotelsScreen(hotels: List<Hotel>) {
 }
 
 @Composable
-fun HotelCard(hotel: Hotel) {
+fun HotelCard(
+    hotel: Hotel,
+    distanceKm: Double? = null
+) {
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     var showCallDialog by remember { mutableStateOf(false) }
@@ -321,15 +380,34 @@ fun HotelCard(hotel: Hotel) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = hotel.nom,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = BleuFonce,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Nom + Distance
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = hotel.nom,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BleuFonce,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
 
+                    distanceKm?.let { km ->
+                        Text(
+                            text = formatDistance(km),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Orange,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+
+                // Lieu
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable {
@@ -354,6 +432,7 @@ fun HotelCard(hotel: Hotel) {
                     Text(text = hotel.lieu, fontSize = 13.sp, color = BleuCiel)
                 }
 
+                // Téléphone
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { showCallDialog = true }
@@ -373,6 +452,7 @@ fun HotelCard(hotel: Hotel) {
                     )
                 }
 
+                // Site web
                 hotel.siteWeb?.let { url ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -419,5 +499,18 @@ fun HotelCard(hotel: Hotel) {
                 }
             }
         )
+    }
+}
+
+/**
+ * Formate joliment la distance :
+ * - < 1 km → "850 m"
+ * - ≥ 1 km → "1,4 km"
+ */
+private fun formatDistance(km: Double): String {
+    return if (km < 1.0) {
+        "${(km * 1000).toInt()} m"
+    } else {
+        String.format("%.1f km", km).replace('.', ',')
     }
 }
