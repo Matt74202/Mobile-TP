@@ -38,7 +38,7 @@ sealed class Destination(
     data object Carte : Destination(
         route = "carte",
         label = "Carte",
-        iconRes = R.drawable.ic_nav_accueil // tu mettras une icône carte plus tard
+        iconRes = R.drawable.ic_nav_bus
     )
 }
 

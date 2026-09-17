@@ -76,8 +76,9 @@ fun MapScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
 
-    // ── Nouvel état pour masquer / afficher le panneau ─────────────────────
     var panneauVisible by remember { mutableStateOf(true) }
+    var modeRecherche by remember { mutableStateOf<String?>(null) } // "trajet" ou "ligne"
+    var afficherResultats by remember { mutableStateOf(false) }
 
     var arriveeTexte by remember { mutableStateOf("") }
     var rechercheLigneTexte by remember { mutableStateOf("") }
@@ -270,6 +271,16 @@ fun MapScreen(
         rechercheLigneTexte = ""
         showSuggestionsLigne = false
         messageErreur = null
+        modeRecherche = null
+        afficherResultats = false
+    }
+
+    // Grouper les résultats par nom de ligne
+    val resultatsGroupes = remember(lignesTrouvees) {
+        lignesTrouvees
+            .groupBy { it.nomAffiche }
+            .toList()
+            .sortedBy { it.first }
     }
 
     // Liste dédupliquée des noms affichables, pour l'autocomplete
@@ -310,14 +321,14 @@ fun MapScreen(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .padding(16.dp)
-                    .heightIn(max = 420.dp),
+                    .heightIn(max = if (lignesTrouvees.isNotEmpty() && afficherResultats) 500.dp else 280.dp),
                 shape = RoundedCornerShape(20.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Column(
                     modifier = Modifier
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxWidth()
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -328,7 +339,8 @@ fun MapScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            "Rechercher un trajet",
+                            if (modeRecherche == null) "Sélectionner un mode" else
+                                if (modeRecherche == "trajet") "Rechercher un trajet" else "Chercher une ligne",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
                             color = BleuFonce
@@ -345,238 +357,437 @@ fun MapScreen(
                         }
                     }
 
-                    // Champ Départ (lecture seule = position actuelle)
-                    OutlinedTextField(
-                        value = when {
-                            localisationEnCours -> "Localisation en cours…"
-                            pointDepart != null -> "Ma position actuelle"
-                            else -> "Position indisponible"
-                        },
-                        onValueChange = {},
-                        readOnly = true,
-                        enabled = false,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        leadingIcon = {
-                            if (localisationEnCours) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = BleuCiel
-                                )
-                            } else {
-                                Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = BleuCiel)
-                            }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            disabledContainerColor = GrisClair,
-                            disabledBorderColor = Gris,
-                            disabledTextColor = BleuFonce,
-                            disabledLeadingIconColor = BleuCiel
-                        ),
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 14.sp)
-                    )
-
-                    // Champ Arrivée
-                    OutlinedTextField(
-                        value = arriveeTexte,
-                        onValueChange = { arriveeTexte = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        placeholder = { Text("Aller à…", color = Color.Gray, fontSize = 14.sp) },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = Orange)
-                        },
-                        trailingIcon = {
-                            if (arriveeTexte.isNotEmpty()) {
-                                Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = "Effacer",
-                                    tint = Orange,
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clickable {
-                                            arriveeTexte = ""
-                                            lignesTrouvees = emptyList()
-                                            messageErreur = null
-                                        }
-                                )
-                            }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = BleuCiel,
-                            unfocusedBorderColor = Gris,
-                            cursorColor = BleuCiel
-                        ),
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 14.sp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = { rechercherTrajet() })
-                    )
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Button(
-                            onClick = { rechercherTrajet() },
-                            enabled = !rechercheEnCours,
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Orange),
-                            modifier = Modifier.height(44.dp)
-                        ) {
-                            if (rechercheEnCours) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(16.dp),
-                                    strokeWidth = 2.dp,
-                                    color = Color.White
-                                )
-                            } else {
-                                Text("Voir le trajet", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                        if (lignesTrouvees.isNotEmpty()) {
-                            OutlinedButton(
-                                onClick = { reinitialiserRecherches() },
-                                shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.height(44.dp)
-                            ) {
-                                Text("Réinitialiser", fontSize = 13.sp, color = BleuFonce)
-                            }
-                        }
-                    }
-
-                    // ── Séparateur "OU" ─────────────────────────────────────
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Gris)
-                        Text(
-                            "  OU  ",
-                            fontSize = 11.sp,
-                            color = Color.Gray,
-                            fontWeight = FontWeight.Medium
-                        )
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Gris)
-                    }
-
-                    // ── Recherche directe d'une ligne de bus ─────────────────
-                    Text(
-                        "Chercher une ligne précise",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = BleuFonce
-                    )
-
-                    OutlinedTextField(
-                        value = rechercheLigneTexte,
-                        onValueChange = {
-                            rechercheLigneTexte = it
-                            showSuggestionsLigne = it.isNotEmpty()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        placeholder = {
-                            Text("Ex: Ligne 12, Analakely…", color = Color.Gray, fontSize = 14.sp)
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Rounded.Search, contentDescription = null, tint = BleuCiel)
-                        },
-                        trailingIcon = {
-                            if (rechercheLigneTexte.isNotEmpty()) {
-                                Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = "Effacer",
-                                    tint = BleuCiel,
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                        .clickable {
-                                            rechercheLigneTexte = ""
-                                            showSuggestionsLigne = false
-                                            lignesTrouvees = emptyList()
-                                            messageErreur = null
-                                        }
-                                )
-                            }
-                        },
-                        shape = RoundedCornerShape(14.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
-                            focusedBorderColor = BleuCiel,
-                            unfocusedBorderColor = Gris,
-                            cursorColor = BleuCiel
-                        ),
-                        singleLine = true,
-                        textStyle = TextStyle(fontSize = 14.sp),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            showSuggestionsLigne = false
-                            rechercherParNumeroLigne()
-                        })
-                    )
-
-                    if (showSuggestionsLigne && suggestionsLignes.isNotEmpty()) {
+                    // ── ÉCRAN DE CHOIX INITIAL ───────────────────────────
+                    if (modeRecherche == null) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .border(1.dp, Gris, RoundedCornerShape(12.dp))
+                                .padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            suggestionsLignes.forEachIndexed { index, suggestion ->
-                                Text(
-                                    text = suggestion,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            rechercheLigneTexte = suggestion
-                                            showSuggestionsLigne = false
-                                            rechercherParNumeroLigne()
-                                        }
-                                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                                    fontSize = 13.sp,
-                                    color = BleuFonce
-                                )
-                                if (index < suggestionsLignes.lastIndex) {
-                                    HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                            Button(
+                                onClick = { modeRecherche = "trajet" },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = BleuCiel),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("Chercher un trajet", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("De → Vers", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
+                                }
+                            }
+
+                            Button(
+                                onClick = { modeRecherche = "ligne" },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Orange),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text("Chercher une ligne", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("Numéro ou nom", fontSize = 12.sp, color = Color.White.copy(alpha = 0.85f))
                                 }
                             }
                         }
                     }
 
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Button(
-                            onClick = { rechercherParNumeroLigne() },
-                            shape = RoundedCornerShape(14.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = BleuCiel),
-                            modifier = Modifier.height(44.dp)
+                    // ── FORMULAIRE TRAJET ────────────────────────────────
+                    if (modeRecherche == "trajet") {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Text("Afficher cette ligne", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                        if (lignesTrouvees.isNotEmpty()) {
-                            OutlinedButton(
-                                onClick = { reinitialiserRecherches() },
+                            // Champ Départ (lecture seule = position actuelle)
+                            OutlinedTextField(
+                                value = when {
+                                    localisationEnCours -> "Localisation en cours…"
+                                    pointDepart != null -> "Ma position actuelle"
+                                    else -> "Position indisponible"
+                                },
+                                onValueChange = {},
+                                readOnly = true,
+                                enabled = false,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                leadingIcon = {
+                                    if (localisationEnCours) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = BleuCiel
+                                        )
+                                    } else {
+                                        Icon(Icons.Outlined.LocationOn, contentDescription = null, tint = BleuCiel)
+                                    }
+                                },
                                 shape = RoundedCornerShape(14.dp),
-                                modifier = Modifier.height(44.dp)
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    disabledContainerColor = GrisClair,
+                                    disabledBorderColor = Gris,
+                                    disabledTextColor = BleuFonce,
+                                    disabledLeadingIconColor = BleuCiel
+                                ),
+                                singleLine = true,
+                                textStyle = TextStyle(fontSize = 14.sp)
+                            )
+
+                            // Champ Arrivée
+                            OutlinedTextField(
+                                value = arriveeTexte,
+                                onValueChange = { arriveeTexte = it },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                placeholder = { Text("Aller à…", color = Color.Gray, fontSize = 14.sp) },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Search, contentDescription = null, tint = Orange)
+                                },
+                                trailingIcon = {
+                                    if (arriveeTexte.isNotEmpty()) {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = "Effacer",
+                                            tint = Orange,
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clickable {
+                                                    arriveeTexte = ""
+                                                    lignesTrouvees = emptyList()
+                                                    messageErreur = null
+                                                }
+                                        )
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedBorderColor = BleuCiel,
+                                    unfocusedBorderColor = Gris,
+                                    cursorColor = BleuCiel
+                                ),
+                                singleLine = true,
+                                textStyle = TextStyle(fontSize = 14.sp),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = { rechercherTrajet() })
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("Réinitialiser", fontSize = 13.sp, color = BleuFonce)
+                                Button(
+                                    onClick = { rechercherTrajet() },
+                                    enabled = !rechercheEnCours,
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Orange),
+                                    modifier = Modifier.height(44.dp)
+                                ) {
+                                    if (rechercheEnCours) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = Color.White
+                                        )
+                                    } else {
+                                        Text("Voir le trajet", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = { modeRecherche = null },
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.height(44.dp)
+                                ) {
+                                    Text("Retour", fontSize = 13.sp, color = BleuFonce)
+                                }
+                            }
+
+                            messageErreur?.let {
+                                Text(it, color = Color(0xFFC0392B), fontSize = 12.sp)
+                            }
+
+                            // ── LISTE DES RÉSULTATS ─────────────────────────
+                            if (lignesTrouvees.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, BleuCiel, RoundedCornerShape(12.dp)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = GrisClair),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        // Header clickable
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { afficherResultats = !afficherResultats }
+                                                .padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                "${resultatsGroupes.size} ligne(s) trouvée(s)",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = BleuFonce
+                                            )
+                                            Icon(
+                                                if (afficherResultats) Icons.Rounded.Search else Icons.Filled.Close,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = BleuCiel
+                                            )
+                                        }
+
+                                        // Liste des résultats (si étendue)
+                                        if (afficherResultats) {
+                                            HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(max = 150.dp)
+                                                    .verticalScroll(rememberScrollState())
+                                            ) {
+                                                resultatsGroupes.forEachIndexed { index, (nomLigne, segments) ->
+                                                    val tousLesNumeros = segments
+                                                        .map { it.relationId }
+                                                        .distinct()
+                                                        .sorted()
+                                                    val numeroLignesAffichage = tousLesNumeros.take(5)
+                                                    val affichage = if (tousLesNumeros.size > 5) {
+                                                        numeroLignesAffichage.joinToString(" - ") + " +${tousLesNumeros.size - 5}"
+                                                    } else {
+                                                        numeroLignesAffichage.joinToString(" - ")
+                                                    }
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clickable { mapView.invalidate() }
+                                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            nomLigne,
+                                                            fontSize = 12.sp,
+                                                            color = BleuFonce,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                    }
+                                                    if (index < resultatsGroupes.lastIndex) {
+                                                        HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
 
-                    messageErreur?.let {
-                        Text(it, color = Color(0xFFC0392B), fontSize = 12.sp)
+                    // ── FORMULAIRE LIGNE ────────────────────────────────
+                    if (modeRecherche == "ligne") {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = rechercheLigneTexte,
+                                onValueChange = {
+                                    rechercheLigneTexte = it
+                                    showSuggestionsLigne = it.isNotEmpty()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                placeholder = {
+                                    Text("Ex: Ligne 12, Analakely…", color = Color.Gray, fontSize = 14.sp)
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Rounded.Search, contentDescription = null, tint = BleuCiel)
+                                },
+                                trailingIcon = {
+                                    if (rechercheLigneTexte.isNotEmpty()) {
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = "Effacer",
+                                            tint = BleuCiel,
+                                            modifier = Modifier
+                                                .size(20.dp)
+                                                .clickable {
+                                                    rechercheLigneTexte = ""
+                                                    showSuggestionsLigne = false
+                                                    lignesTrouvees = emptyList()
+                                                    messageErreur = null
+                                                }
+                                        )
+                                    }
+                                },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedBorderColor = BleuCiel,
+                                    unfocusedBorderColor = Gris,
+                                    cursorColor = BleuCiel
+                                ),
+                                singleLine = true,
+                                textStyle = TextStyle(fontSize = 14.sp),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = {
+                                    showSuggestionsLigne = false
+                                    rechercherParNumeroLigne()
+                                })
+                            )
+
+                            if (showSuggestionsLigne && suggestionsLignes.isNotEmpty()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, Gris, RoundedCornerShape(12.dp))
+                                ) {
+                                    suggestionsLignes.forEachIndexed { index, suggestion ->
+                                        Text(
+                                            text = suggestion,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    rechercheLigneTexte = suggestion
+                                                    showSuggestionsLigne = false
+                                                    rechercherParNumeroLigne()
+                                                }
+                                                .padding(horizontal = 14.dp, vertical = 12.dp),
+                                            fontSize = 13.sp,
+                                            color = BleuFonce
+                                        )
+                                        if (index < suggestionsLignes.lastIndex) {
+                                            HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Button(
+                                    onClick = { rechercherParNumeroLigne() },
+                                    shape = RoundedCornerShape(14.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = BleuCiel),
+                                    modifier = Modifier.height(44.dp)
+                                ) {
+                                    Text("Afficher cette ligne", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                OutlinedButton(
+                                    onClick = { modeRecherche = null },
+                                    shape = RoundedCornerShape(14.dp),
+                                    modifier = Modifier.height(44.dp)
+                                ) {
+                                    Text("Retour", fontSize = 13.sp, color = BleuFonce)
+                                }
+                            }
+
+                            messageErreur?.let {
+                                Text(it, color = Color(0xFFC0392B), fontSize = 12.sp)
+                            }
+
+                            // ── LISTE DES RÉSULTATS ─────────────────────────
+                            if (lignesTrouvees.isNotEmpty()) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .border(1.dp, BleuCiel, RoundedCornerShape(12.dp)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = GrisClair),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                                ) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        // Header clickable
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { afficherResultats = !afficherResultats }
+                                                .padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                "${resultatsGroupes.size} ligne(s) trouvée(s)",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = BleuFonce
+                                            )
+                                            Icon(
+                                                if (afficherResultats) Icons.Rounded.Search else Icons.Filled.Close,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = BleuCiel
+                                            )
+                                        }
+
+                                        // Liste des résultats (si étendue)
+                                        if (afficherResultats) {
+                                            HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .heightIn(max = 150.dp)
+                                                    .verticalScroll(rememberScrollState())
+                                            ) {
+                                                resultatsGroupes.forEachIndexed { index, (nomLigne, segments) ->
+                                                    val tousLesNumeros = segments
+                                                        .map { it.relationId }
+                                                        .distinct()
+                                                        .sorted()
+                                                    val numeroLignesAffichage = tousLesNumeros.take(5)
+                                                    val affichage = if (tousLesNumeros.size > 5) {
+                                                        numeroLignesAffichage.joinToString(" - ") + " +${tousLesNumeros.size - 5}"
+                                                    } else {
+                                                        numeroLignesAffichage.joinToString(" - ")
+                                                    }
+                                                    Row(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .clickable { mapView.invalidate() }
+                                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            nomLigne,
+                                                            fontSize = 12.sp,
+                                                            color = BleuFonce,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+                                                        Text(
+                                                            affichage,
+                                                            fontSize = 11.sp,
+                                                            color = Orange,
+                                                            fontWeight = FontWeight.SemiBold
+                                                        )
+                                                    }
+                                                    if (index < resultatsGroupes.lastIndex) {
+                                                        HorizontalDivider(color = Gris, thickness = 0.5.dp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
