@@ -18,7 +18,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "mizaha.db")
-            .fallbackToDestructiveMigration() // à retirer une fois en prod
+            .fallbackToDestructiveMigration()
             .build()
 
     @Provides fun provideRestaurantDao(db: AppDatabase) = db.restaurantDao()
