@@ -80,3 +80,36 @@ val contactsUrgenceTest = listOf(
 
 // Statique pour l'instant — sera calculé par géolocalisation plus tard
 val contactPlusProcheTest = contactsUrgenceTest[0]
+
+//----------------------------------------DESTINATIONS----------------------------------------------
+val destinationsTest = listOf(
+    DestinationTouristique(1, "Nosy Be", R.drawable.dest_nosybe),
+    DestinationTouristique(2, "Isalo", R.drawable.dest_isalo),
+    DestinationTouristique(3, "Andasibe", R.drawable.dest_andasibe),
+    DestinationTouristique(4, "Ranomafana", R.drawable.dest_ranomafana),
+    DestinationTouristique(5, "Antsirabe", R.drawable.dest_antsirabe),
+    DestinationTouristique(6, "Sainte-Marie", R.drawable.dest_saintemarie)
+)
+
+//----------------------------------------WEATHER---------------------------------------------------
+// Valeurs réelles récupérées pour Antananarivo aujourd'hui (17 sept. 2026) — statique pour l'instant,
+// à remplacer par un vrai appel API météo plus tard.
+val weatherTodayTest = WeatherToday(
+    temperatureActuelle = 11.9,
+    conditionText = "Partiellement nuageux",
+    emoji = "⛅",
+    tempMax = 22.4,
+    tempMin = 9.9,
+    chancePluie = 10
+)
+
+val weatherWeekTest = listOf(
+    WeatherDay("Aujourd'hui", "⛅", 22.4, 9.9, 10),
+    WeatherDay("Vendredi 18 sept.", "☀️", 23.9, 11.8, 0),
+    WeatherDay("Samedi 19 sept.", "☀️", 25.9, 13.8, 0),
+    WeatherDay("Dimanche 20 sept.", "🌤️", 22.9, 12.6, 0),
+    WeatherDay("Lundi 21 sept.", "🌥️", 24.9, 13.6, 15),
+    WeatherDay("Mardi 22 sept.", "🌧️", 25.5, 14.2, 70),
+    WeatherDay("Mercredi 23 sept.", "🌧️", 25.2, 14.0, 65),
+    WeatherDay("Jeudi 24 sept.", "🌦️", 25.8, 13.9, 45)
+)
